@@ -1,0 +1,7 @@
+flask
+gunicorn
+insightface
+onnxruntime
+opencv-python-headless
+numpy
+supabase
