@@ -1,31 +1,34 @@
-# Imagium Foto — Serviço de Busca Facial
+# Portal Imagium Foto
 
-Serviço separado, sempre ligado, que faz a busca por rosto. Roda ao
-lado do site principal (que continua no Vercel) — os dois se falam
-por uma chamada de API simples.
+Portal interno (administradores, fotógrafos e organizadores). Projeto separado do site do cliente,
+usando o mesmo banco Supabase e o mesmo bucket do Cloudflare R2.
 
-## Deploy no Railway
+## Segurança
 
-1. Crie um repositório novo no GitHub (ex: `imagium-face-service`) e
-   suba todos os arquivos desta pasta.
-2. No Railway (railway.app), crie um projeto novo → "Deploy from
-   GitHub repo" → escolha esse repositório. O Railway detecta o
-   `Dockerfile` sozinho.
-3. Em "Variables", adicione:
-   - `SUPABASE_URL`
-   - `SUPABASE_SECRET_KEY`
-   - `FACE_SERVICE_SECRET` (invente uma senha, só letras/números)
-4. Espere o deploy terminar. O Railway te dá uma URL pública (ative
-   em Settings → Networking → "Generate Domain", se não tiver uma
-   automática).
-5. Teste abrindo `https://sua-url.up.railway.app/health` no navegador
-   — deve responder `{"status": "ok"}`.
+- O banco não aceita a chave pública em nenhuma tabela ou função. Tudo passa pelo servidor com a chave secreta,
+  e cada página e ação confere antes quem está logado e se a pessoa administra aquele evento.
+- Nenhuma variável de ambiente vai para o navegador (nenhuma começa com `NEXT_PUBLIC_`).
+- Evento que a pessoa não administra responde "não encontrado" (não revela que existe).
+- O portal não é indexado por buscadores e não pode ser embutido em outro site.
 
-## Conectar ao site principal (Vercel)
+## Publicar no Vercel
 
-No Vercel, adicione duas variáveis novas ao projeto `imagium-foto`:
-- `FACE_SERVICE_URL` = a URL do Railway (ex: `https://sua-url.up.railway.app`)
-- `FACE_SERVICE_SECRET` = a MESMA senha que você colocou no Railway
+1. Crie um repositório privado no GitHub (ex.: `imagium-portal`) e envie estes arquivos.
+2. No Vercel: Add New → Project → importe o repositório. Framework: Next.js.
+3. Em Environment Variables, preencha tudo do `.env.example`.
+4. Deploy. Depois, se quiser, ligue um domínio (ex.: `portal.imagiumfoto.com.br`) e atualize `PORTAL_URL`.
 
-O site já vem preparado (rota `/api/face-search`) para chamar esse
-serviço automaticamente assim que essas variáveis existirem.
+## Configurar o Supabase (uma vez)
+
+- Authentication → Sign In / Providers: desligue **Allow new users to sign up**. Contas só são criadas por você.
+- Authentication → URL Configuration: em Redirect URLs, adicione `https://SEU-PORTAL/auth/confirm`.
+- Authentication → Users → Add user: crie sua conta (marque Auto Confirm User).
+
+## Rodar localmente
+
+```
+cp .env.example .env.local   # e preencha
+npm install
+npm run dev
+npm test                     # testes da divisão do valor
+```
